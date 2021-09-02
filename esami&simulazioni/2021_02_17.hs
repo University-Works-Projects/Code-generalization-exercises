@@ -122,47 +122,46 @@
 
         -- Svolgimento
 
+-- Soluzione altrui
+    A parole: il problema generale consiste nel calcolare (x1 op ... op xn) dove op è l'operazione di un monoide  e x1, ..., xn 
+    sono i dati contenuti in una struttura dati (arborescente) che contiene dati tutti dello stesso tipo.
+    Nota 1: Nei tre esempi da generalizzare il monoide è sempre commutativo.
+    Nota 2: Il fatto che le tre strutture siano arborescenti permette di risolvere il problema per ricorsione strutturale 
+    sulle sotto-strutture arborescenti, presenti in numero variabile (1/2/un qualunque numero finito).
 
-A parole: il problema generale consiste nel calcolare (x1 op ... op xn) dove op è l'operazione di un monoide  e x1, ..., xn 
-sono i dati contenuti in una struttura dati (arborescente) che contiene dati tutti dello stesso tipo.
-Nota 1: Nei tre esempi da generalizzare il monoide è sempre commutativo.
-Nota 2: Il fatto che le tre strutture siano arborescenti permette di risolvere il problema per ricorsione strutturale 
-sulle sotto-strutture arborescenti, presenti in numero variabile (1/2/un qualunque numero finito).
+    class Reduce N C where
+        neutral :: N
+        op :: N -> N -> N
+        -- (N, neutral, op) forma un monoide
+        get :: C -> N
+        children :: C -> [C]
 
-class Reduce N C where
-   neutral :: N
-   op :: N -> N -> N
-   -- (N, neutral, op) forma un monoide
-   get :: C -> N
-   children :: C -> [C]
+        reduce :: Reduce N C => C -> N
+        reduce c = op (get c) (reduce_L (children c))
+        reduce_L :: Reduce N C => [C] -> N
+        reduce_L [] = neutral
+        reduce_L (c : l) = op (reduce c) (reduce_L l)
 
-reduce :: Reduce N C => C -> N
-reduce c = op (get c) (reduce_L (children c))
-reduce_L :: Reduce N C => [C] -> N
-reduce_L [] = neutral
-reduce_L (c : l) = op (reduce c) (reduce_L l)
+    instance Reduce Nat L where
+        neutral = 0
+        op x y = x + y
+        get [] = 0
+        get (x:l) = x
+        children [] = []
+        children (x:l) = l : []
 
-instance Reduce Nat L where
-   neutral = 0
-   op x y = x + y
-   get [] = 0
-   get (x:l) = x
-   children [] = []
-   children (x:l) = l : []
+    instance Reduce Nat T where
+        neutral = 1
+        op x y = x * y
+        get Nil = 1
+        get (l # x # r) = x
+        children Nil = []
+        children (l # x # r) =  l : r : []
 
-instance Reduce Nat T where
+    instance Reduce Nat B where
+        neutral = 0
+        op x y = max x y
+        get (x  l) = x
+        children (x  l) = l
 
-   neutral = 1
-   op x y = x * y
-   get Nil = 1
-   get (l # x # r) = x
-   children Nil = []
-   children (l # x # r) =  l : r : []
-
-instance Reduce Nat B where
-   neutral = 0
-   op x y = max x y
-   get (x  l) = x
-   children (x  l) = l
-
-Nota: la seconda istanza è equivalente alla multiply_all solo in virtù della commutatività del prodotto.
+    Nota: la seconda istanza è equivalente alla multiply_all solo in virtù della commutatività del prodotto.
